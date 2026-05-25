@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Telco Customer Churn Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav>
+        <div class="container">
+            <a href="/" class="brand">Telco Churn Analytics</a>
+            <ul>
+                <li><a href="/">🏠 Home</a></li>
+                <li><a href="/dashboard">📊 Dashboard</a></li>
+                <li><a href="/predict">🔮 Prediksi</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main>
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2026 Telco Customer Churn Analysis Dashboard | All Rights Reserved</p>
+        <p>Powered by Flask, scikit-learn & MLflow</p>
+    </footer>
+
+    <script>
+        // Simple script untuk enhancing UX
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded successfully!');
+        });
+    </script>
+</body>
+</html>

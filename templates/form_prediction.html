@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Prediksi Churn - Telco Customer Churn Dashboard{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <h1>🔮 Prediksi Customer Churn</h1>
+        <p>Masukkan data pelanggan untuk memprediksi kemungkinan churn</p>
+    </div>
+
+    <!-- RESULT SECTION -->
+    {% if prediction_result %}
+        <div class="chart-container">
+            <h3>📊 Hasil Prediksi</h3>
+            {% if prediction_result.prediction == 1 %}
+                <div class="result-box churn">
+                    <h3>⚠️ BERISIKO CHURN</h3>
+                    <div class="probability">{{ "%.2f"|format(prediction_result.probability * 100) }}%</div>
+                    <div class="probability-label">Probabilitas Churn</div>
+                    <p style="margin-top: 1rem;">
+                        Pelanggan ini memiliki risiko tinggi untuk melakukan churn. 
+                        Pertimbangkan strategi retention segera.
+                    </p>
+                </div>
+            {% else %}
+                <div class="result-box">
+                    <h3>✅ AMAN (TIDAK CHURN)</h3>
+                    <div class="probability">{{ "%.2f"|format((1 - prediction_result.probability) * 100) }}%</div>
+                    <div class="probability-label">Probabilitas Retention</div>
+                    <p style="margin-top: 1rem;">
+                        Pelanggan ini memiliki probabilitas rendah untuk churn. 
+                        Fokus pada maintenance dan customer satisfaction.
+                    </p>
+                </div>
+            {% endif %}
+            
+            <div style="margin-top: 2rem; padding: 1rem; background-color: #f0f4f3; border-radius: 5px;">
+                <h4>📋 Detail Prediksi:</h4>
+                <table class="table">
+                    <tr>
+                        <td><strong>Model</strong></td>
+                        <td>Logistic Regression</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Accuracy</strong></td>
+                        <td>85%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prediction Timestamp</strong></td>
+                        <td>{{ prediction_result.timestamp }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- PREDICTION FORM -->
+    <div class="card">
+        <h2>📝 Form Prediksi Churn</h2>
+        <p style="margin-bottom: 2rem; color: #666;">
+            Isi formulir di bawah dengan data pelanggan. Sistem akan menganalisis 10 atribut 
+            paling penting untuk memprediksi kemungkinan churn.
+        </p>
+
+        <form method="POST" action="/predict" style="margin-top: 2rem;">
+            <!-- ROW 1: Tenure & Monthly Charges -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tenure">📅 Tenure (bulan) *</label>
+                    <input type="number" id="tenure" name="tenure" min="0" max="72" step="1" 
+                           value="{{ form_data.tenure or '32' }}" required>
+                    <small style="color: #666;">Berapa lama pelanggan berlangganan? (0-72 bulan)</small>
+                </div>
+                <div class="form-group">
+                    <label for="monthly_charges">💰 Monthly Charges ($) *</label>
+                    <input type="number" id="monthly_charges" name="monthly_charges" min="0" max="150" step="0.01"
+                           value="{{ form_data.monthly_charges or '64.80' }}" required>
+                    <small style="color: #666;">Tagihan bulanan pelanggan</small>
+                </div>
+            </div>
+
+            <!-- ROW 2: Total Charges & Contract -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="total_charges">💵 Total Charges ($) *</label>
+                    <input type="number" id="total_charges" name="total_charges" min="0" max="10000" step="0.01"
+                           value="{{ form_data.total_charges or '2100.00' }}" required>
+                    <small style="color: #666;">Total tagihan yang sudah dibayarkan</small>
+                </div>
+                <div class="form-group">
+                    <label for="contract">📋 Contract Type *</label>
+                    <select id="contract" name="contract" required>
+                        <option value="">-- Pilih Kontrak --</option>
+                        <option value="Month-to-month" {% if form_data.contract == 'Month-to-month' %}selected{% endif %}>Month-to-Month</option>
+                        <option value="One year" {% if form_data.contract == 'One year' %}selected{% endif %}>One Year</option>
+                        <option value="Two year" {% if form_data.contract == 'Two year' %}selected{% endif %}>Two Year</option>
+                    </select>
+                    <small style="color: #666;">Jenis kontrak pelanggan</small>
+                </div>
+            </div>
+
+            <!-- ROW 3: Internet Service & Tech Support -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="internet_service">🌐 Internet Service *</label>
+                    <select id="internet_service" name="internet_service" required>
+                        <option value="">-- Pilih Layanan --</option>
+                        <option value="DSL" {% if form_data.internet_service == 'DSL' %}selected{% endif %}>DSL</option>
+                        <option value="Fiber optic" {% if form_data.internet_service == 'Fiber optic' %}selected{% endif %}>Fiber Optic</option>
+                        <option value="No" {% if form_data.internet_service == 'No' %}selected{% endif %}>Tidak Ada</option>
+                    </select>
+                    <small style="color: #666;">Jenis layanan internet</small>
+                </div>
+                <div class="form-group">
+                    <label for="tech_support">🔧 Tech Support *</label>
+                    <select id="tech_support" name="tech_support" required>
+                        <option value="">-- Pilih Opsi --</option>
+                        <option value="Yes" {% if form_data.tech_support == 'Yes' %}selected{% endif %}>Ya</option>
+                        <option value="No" {% if form_data.tech_support == 'No' %}selected{% endif %}>Tidak</option>
+                    </select>
+                    <small style="color: #666;">Apakah pelanggan menggunakan tech support?</small>
+                </div>
+            </div>
+
+            <!-- ROW 4: Online Security & Payment Method -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="online_security">🔒 Online Security *</label>
+                    <select id="online_security" name="online_security" required>
+                        <option value="">-- Pilih Opsi --</option>
+                        <option value="Yes" {% if form_data.online_security == 'Yes' %}selected{% endif %}>Ya</option>
+                        <option value="No" {% if form_data.online_security == 'No' %}selected{% endif %}>Tidak</option>
+                    </select>
+                    <small style="color: #666;">Apakah pelanggan menggunakan online security?</small>
+                </div>
+                <div class="form-group">
+                    <label for="payment_method">💳 Payment Method *</label>
+                    <select id="payment_method" name="payment_method" required>
+                        <option value="">-- Pilih Metode --</option>
+                        <option value="Electronic check" {% if form_data.payment_method == 'Electronic check' %}selected{% endif %}>Electronic Check</option>
+                        <option value="Mailed check" {% if form_data.payment_method == 'Mailed check' %}selected{% endif %}>Mailed Check</option>
+                        <option value="Bank transfer (automatic)" {% if form_data.payment_method == 'Bank transfer (automatic)' %}selected{% endif %}>Bank Transfer (Auto)</option>
+                        <option value="Credit card (automatic)" {% if form_data.payment_method == 'Credit card (automatic)' %}selected{% endif %}>Credit Card (Auto)</option>
+                    </select>
+                    <small style="color: #666;">Metode pembayaran pelanggan</small>
+                </div>
+            </div>
+
+            <!-- ROW 5: Device Protection & Online Backup -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="device_protection">📱 Device Protection *</label>
+                    <select id="device_protection" name="device_protection" required>
+                        <option value="">-- Pilih Opsi --</option>
+                        <option value="Yes" {% if form_data.device_protection == 'Yes' %}selected{% endif %}>Ya</option>
+                        <option value="No" {% if form_data.device_protection == 'No' %}selected{% endif %}>Tidak</option>
+                    </select>
+                    <small style="color: #666;">Apakah pelanggan menggunakan device protection?</small>
+                </div>
+                <div class="form-group">
+                    <label for="online_backup">☁️ Online Backup *</label>
+                    <select id="online_backup" name="online_backup" required>
+                        <option value="">-- Pilih Opsi --</option>
+                        <option value="Yes" {% if form_data.online_backup == 'Yes' %}selected{% endif %}>Ya</option>
+                        <option value="No" {% if form_data.online_backup == 'No' %}selected{% endif %}>Tidak</option>
+                    </select>
+                    <small style="color: #666;">Apakah pelanggan menggunakan online backup?</small>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">🔮 Prediksi Churn</button>
+                <button type="reset" class="btn btn-secondary" style="flex: 1;">🔄 Reset Form</button>
+            </div>
+        </form>
+
+        <!-- SAMPLE DATA BUTTONS -->
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #ddd;">
+            <h3>📌 Gunakan Sample Data</h3>
+            <p style="margin-bottom: 1rem; color: #666;">Klik salah satu tombol di bawah untuk mengisi form dengan data sample:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="loadSampleChurn()">
+                    ⚠️ Sample: High Churn Risk
+                </button>
+                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="loadSampleRetain()">
+                    ✅ Sample: Low Churn Risk
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEATURE IMPORTANCE -->
+    <div class="card">
+        <h2>📊 Top 10 Features yang Mempengaruhi Churn</h2>
+        <p style="margin-bottom: 1.5rem; color: #666;">
+            Features di bawah adalah 10 atribut paling penting yang digunakan model 
+            untuk memprediksi kemungkinan customer churn:
+        </p>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ranking</th>
+                    <th>Feature</th>
+                    <th>Importance Score</th>
+                    <th>Pengaruh</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><strong>Contract Type</strong></td>
+                    <td>0.8921</td>
+                    <td><span class="badge badge-danger">Very High</span></td>
+                </tr>
+                <tr style="background-color: #f9fafb;">
+                    <td>2</td>
+                    <td><strong>Tenure Months</strong></td>
+                    <td>0.8234</td>
+                    <td><span class="badge badge-danger">Very High</span></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>Monthly Charges</strong></td>
+                    <td>0.7645</td>
+                    <td><span class="badge badge-danger">Very High</span></td>
+                </tr>
+                <tr style="background-color: #f9fafb;">
+                    <td>4</td>
+                    <td><strong>Total Charges</strong></td>
+                    <td>0.6821</td>
+                    <td><span class="badge" style="background-color: #fff3cd; color: #856404;">High</span></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><strong>Internet Service</strong></td>
+                    <td>0.6234</td>
+                    <td><span class="badge" style="background-color: #fff3cd; color: #856404;">High</span></td>
+                </tr>
+                <tr style="background-color: #f9fafb;">
+                    <td>6</td>
+                    <td><strong>Tech Support</strong></td>
+                    <td>0.5123</td>
+                    <td><span class="badge" style="background-color: #fff3cd; color: #856404;">High</span></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td><strong>Online Security</strong></td>
+                    <td>0.4876</td>
+                    <td><span class="badge" style="background-color: #d1ecf1; color: #0c5460;">Medium</span></td>
+                </tr>
+                <tr style="background-color: #f9fafb;">
+                    <td>8</td>
+                    <td><strong>Payment Method</strong></td>
+                    <td>0.4234</td>
+                    <td><span class="badge" style="background-color: #d1ecf1; color: #0c5460;">Medium</span></td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><strong>Device Protection</strong></td>
+                    <td>0.3856</td>
+                    <td><span class="badge" style="background-color: #d1ecf1; color: #0c5460;">Medium</span></td>
+                </tr>
+                <tr style="background-color: #f9fafb;">
+                    <td>10</td>
+                    <td><strong>Online Backup</strong></td>
+                    <td>0.3421</td>
+                    <td><span class="badge" style="background-color: #d1ecf1; color: #0c5460;">Medium</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- INTERPRETATION GUIDE -->
+    <div class="card">
+        <h2>💡 Panduan Interpretasi Hasil</h2>
+        
+        <div style="margin-top: 1.5rem;">
+            <h3>🎯 Skor Prediksi:</h3>
+            <div style="margin-left: 1rem; margin-top: 1rem;">
+                <p><strong>0% - 30%:</strong> Probabilitas churn rendah - Pelanggan cenderung loyal</p>
+                <p><strong>30% - 60%:</strong> Probabilitas churn sedang - Perlu monitoring</p>
+                <p><strong>60% - 100%:</strong> Probabilitas churn tinggi - Segera lakukan retention strategy</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+            <h3>🎯 Rekomendasi Aksi:</h3>
+            <div style="margin-left: 1rem; margin-top: 1rem;">
+                <p><strong>Churn Risk Tinggi (>60%):</strong></p>
+                <ul style="margin-left: 2rem;">
+                    <li>Hubungi pelanggan untuk penawaran khusus</li>
+                    <li>Tawarkan upgrade atau layanan tambahan</li>
+                    <li>Review kepuasan pelanggan</li>
+                </ul>
+            </div>
+            <div style="margin-left: 1rem; margin-top: 1rem;">
+                <p><strong>Churn Risk Sedang (30%-60%):</strong></p>
+                <ul style="margin-left: 2rem;">
+                    <li>Monitor komunikasi dengan pelanggan</li>
+                    <li>Pastikan layanan berkualitas baik</li>
+                    <li>Tawarkan loyalty program</li>
+                </ul>
+            </div>
+            <div style="margin-left: 1rem; margin-top: 1rem;">
+                <p><strong>Churn Risk Rendah (<30%):</strong></p>
+                <ul style="margin-left: 2rem;">
+                    <li>Maintain pelayanan yang baik</li>
+                    <li>Fokus pada customer satisfaction</li>
+                    <li>Tawarkan referral program</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadSampleChurn() {
+            document.getElementById('tenure').value = '5';
+            document.getElementById('monthly_charges').value = '89.50';
+            document.getElementById('total_charges').value = '447.50';
+            document.getElementById('contract').value = 'Month-to-month';
+            document.getElementById('internet_service').value = 'Fiber optic';
+            document.getElementById('tech_support').value = 'No';
+            document.getElementById('online_security').value = 'No';
+            document.getElementById('payment_method').value = 'Electronic check';
+            document.getElementById('device_protection').value = 'No';
+            document.getElementById('online_backup').value = 'No';
+            
+            // Highlight form
+            document.querySelector('.card').style.backgroundColor = '#fff5f5';
+        }
+
+        function loadSampleRetain() {
+            document.getElementById('tenure').value = '60';
+            document.getElementById('monthly_charges').value = '45.20';
+            document.getElementById('total_charges').value = '2712.00';
+            document.getElementById('contract').value = 'Two year';
+            document.getElementById('internet_service').value = 'DSL';
+            document.getElementById('tech_support').value = 'Yes';
+            document.getElementById('online_security').value = 'Yes';
+            document.getElementById('payment_method').value = 'Bank transfer (automatic)';
+            document.getElementById('device_protection').value = 'Yes';
+            document.getElementById('online_backup').value = 'Yes';
+            
+            // Highlight form
+            document.querySelector('.card').style.backgroundColor = '#f5fff5';
+        }
+    </script>
+
+    <style>
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+{% endblock %}
