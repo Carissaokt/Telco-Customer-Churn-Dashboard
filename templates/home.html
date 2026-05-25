@@ -3,121 +3,93 @@
 {% block title %}Home - Telco Customer Churn Dashboard{% endblock %}
 
 {% block content %}
-    <div class="header">
-        <h1>📊 Telco Customer Churn Analysis Dashboard</h1>
-        <p>Prediksi dan Analisis Pelanggan Telco yang Akan Churn</p>
-    </div>
-
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <h4>📈 Model Accuracy</h4>
-            <div class="value">85%</div>
-            <div class="unit">Logistic Regression</div>
+    <section class="page-intro">
+        <div class="hero-copy">
+            <p class="eyebrow">Solusi Analitik Churn Pelanggan</p>
+            <h1>Dashboard Telco yang ringkas, profesional, dan berfokus pada retensi.</h1>
+            <p class="hero-text">Gunakan data untuk memahami churn, mengidentifikasi risiko, dan menjalankan strategi retention yang lebih efektif.</p>
+            <div class="hero-actions">
+                <a href="/dashboard" class="btn btn-primary">Lihat Dashboard</a>
+                <a href="/predict" class="btn btn-secondary">Mulai Prediksi</a>
+            </div>
         </div>
-        <div class="stat-card">
-            <h4>👥 Total Customers</h4>
-            <div class="value">7,043</div>
-            <div class="unit">Telco Dataset</div>
+        <div class="hero-cards">
+            <article class="stat-card">
+                <h4>Model Accuracy</h4>
+                <div class="value">85%</div>
+                <div class="unit">Logistic Regression</div>
+            </article>
+            <article class="stat-card">
+                <h4>Total Pelanggan</h4>
+                <div class="value">7,043</div>
+                <div class="unit">Data Telco</div>
+            </article>
+            <article class="stat-card">
+                <h4>Churn Rate</h4>
+                <div class="value">26.5%</div>
+                <div class="unit">Historical Data</div>
+            </article>
         </div>
-        <div class="stat-card">
-            <h4>❌ Churn Rate</h4>
-            <div class="value">26.5%</div>
-            <div class="unit">Historical Data</div>
-        </div>
-    </div>
+    </section>
 
-    <div class="card">
-        <h2>🎯 Selamat Datang!</h2>
-        <p>
-            Dashboard ini dirancang untuk membantu menganalisis dan memprediksi kemungkinan pelanggan 
-            Telco yang akan melakukan churn (berhenti berlangganan). Menggunakan Machine Learning 
-            dan Logistic Regression, sistem kami dapat memberikan insight berharga untuk retention strategy.
-        </p>
-
-        <h3>📋 Fitur Dashboard:</h3>
-        <ul style="margin-left: 2rem; margin-top: 1rem;">
-            <li><strong>Dashboard Analisis:</strong> Visualisasi data pelanggan Telco dengan berbagai metrik penting</li>
-            <li><strong>Prediksi Churn:</strong> Prediksi apakah pelanggan akan churn berdasarkan profil mereka</li>
-            <li><strong>Feature Importance:</strong> Lihat atribut apa yang paling mempengaruhi churn</li>
-            <li><strong>Real-time Analysis:</strong> Analisis data secara real-time dengan model yang terlatih</li>
-        </ul>
-
-        <div style="margin-top: 2rem; text-align: center;">
-            <a href="/dashboard" class="btn btn-primary">Lihat Dashboard →</a>
-            <a href="/predict" class="btn btn-secondary" style="margin-left: 1rem;">Mulai Prediksi →</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>📊 Dataset Information</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Metrik</th>
-                    <th>Nilai</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Total Records</strong></td>
-                    <td>7,043 customers</td>
-                </tr>
-                <tr>
-                    <td><strong>Churn Count</strong></td>
-                    <td>1,869 customers (26.5%)</td>
-                </tr>
-                <tr>
-                    <td><strong>Non-Churn Count</strong></td>
-                    <td>5,174 customers (73.5%)</td>
-                </tr>
-                <tr>
-                    <td><strong>Features</strong></td>
-                    <td>20+ attributes</td>
-                </tr>
-                <tr>
-                    <td><strong>Model Type</strong></td>
-                    <td>Logistic Regression</td>
-                </tr>
-                <tr>
-                    <td><strong>Train-Test Split</strong></td>
-                    <td>80% - 20%</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="card">
-        <h2>💡 Bagaimana Menggunakan Dashboard?</h2>
-        
-        <div style="margin-top: 1.5rem;">
-            <h3>1. 📊 Jelajahi Dashboard</h3>
-            <p>
-                Kunjungi halaman Dashboard untuk melihat visualisasi data pelanggan Telco. 
-                Anda akan menemukan chart tentang churn distribution, kontrak type, tenure, 
-                dan berbagai metrik penting lainnya.
-            </p>
+    <section class="section-overview">
+        <div class="card">
+            <h2>Apa yang Anda Dapatkan</h2>
+            <p class="section-text">Platform ini menyajikan ringkasan performa churn, prediksi pelanggan, dan informasi penting dalam tampilan yang mudah dimengerti.</p>
+            <ul class="feature-list">
+                <li><strong>Emphasis pada retensi pelanggan:</strong> fokus pada metrik churn dan loyalitas.</li>
+                <li><strong>Visualisasi data yang bersih:</strong> dashboard profesional tanpa elemen berlebihan.</li>
+                <li><strong>Prediksi berbasis data:</strong> memetakan risiko churn berdasarkan profil pelanggan.</li>
+                <li><strong>Integrasi laporan eksternal:</strong> tampilkan laporan Google Looker Studio di dashboard.</li>
+            </ul>
         </div>
 
-        <div style="margin-top: 1.5rem;">
-            <h3>2. 🔮 Buat Prediksi</h3>
-            <p>
-                Di halaman Prediksi, isi form dengan data pelanggan. Sistem akan menggunakan 
-                10 atribut paling penting untuk memprediksi apakah pelanggan akan churn atau tidak.
-            </p>
+        <div class="card card-slim">
+            <h2>Ringkasan Dataset</h2>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td><strong>Total Records</strong></td>
+                        <td>7,043 pelanggan</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Churn</strong></td>
+                        <td>1,869 pelanggan (26.5%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Retained</strong></td>
+                        <td>5,174 pelanggan (73.5%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Model</strong></td>
+                        <td>Logistic Regression</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Split Data</strong></td>
+                        <td>80% / 20%</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+    </section>
 
-        <div style="margin-top: 1.5rem;">
-            <h3>3. 📈 Analisis Hasil</h3>
-            <p>
-                Lihat hasil prediksi beserta probabilitas churn. Semakin tinggi probabilitas, 
-                semakin besar risiko pelanggan untuk berhenti berlangganan.
-            </p>
+    <section class="section-overview">
+        <div class="card">
+            <h2>Cara Menggunakan</h2>
+            <div class="feature-grid">
+                <div>
+                    <h3>Dashboard</h3>
+                    <p>Lihat laporan analitik dan metrik utama yang menyoroti tren churn dan kinerja pelanggan.</p>
+                </div>
+                <div>
+                    <h3>Prediksi</h3>
+                    <p>Isi formulir dengan data pelanggan dan gunakan model untuk menghitung risiko churn.</p>
+                </div>
+                <div>
+                    <h3>Insight</h3>
+                    <p>Gunakan hasil dan rekomendasi untuk mengarahkan tindakan retention yang lebih tepat.</p>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <style>
-        ul li {
-            margin-bottom: 0.5rem;
-        }
-    </style>
+    </section>
 {% endblock %}
