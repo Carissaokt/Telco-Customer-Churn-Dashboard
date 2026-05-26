@@ -11,10 +11,28 @@
     <nav>
         <div class="container nav-wrapper">
             <a href="/" class="brand">Telco Churn Analytics</a>
+
             <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-                <li><a href="/predict">Prediksi</a></li>
+                <li>
+                    <a href="/"
+                    class="{% if request.path == '/' %}active{% endif %}">
+                    Home
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/dashboard"
+                    class="{% if request.path == '/dashboard' %}active{% endif %}">
+                    Dashboard
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/predict"
+                    class="{% if request.path == '/predict' %}active{% endif %}">
+                    Prediksi
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>
