@@ -58,7 +58,7 @@ class ChurnModel:
             'Importance': np.abs(self.model.coef_[0])
         }).sort_values('Importance', ascending=False)
         
-        return self.model, X_test_scaled, y_test
+        return self.model, X_test, y_test
     
     def predict(self, X):
         """

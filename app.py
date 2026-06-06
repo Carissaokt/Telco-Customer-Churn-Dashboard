@@ -2,16 +2,24 @@ from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import mlflow
+import mlflow.sklearn
+import dagshub
 import os
 import sys
+from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, recall_score, f1_score
 from model.modeling import ChurnModel
 
 # Initialize Flask App
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'telco_churn_analysis_2026'
 
+# DagsHub configuration
+dagshub.init(repo_owner='Carissaokt', repo_name='Telco-Customer-Churn-Dashboard', mlflow=True)
+
 # Global model instance
 churn_model = ChurnModel()
+model_stats = {}
 
 # Feature mapping untuk prediction
 FEATURE_MAPPING = {
@@ -98,8 +106,60 @@ def train_model_with_data():
         # Train model
         model, X_test, y_test = churn_model.train(X, y)
         
+        # Evaluate model on test split
+        y_pred = churn_model.predict(X_test)
+        y_proba = churn_model.predict_proba(X_test)[:, 1]
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred, zero_division=0)
+        recall = recall_score(y_test, y_pred, zero_division=0)
+        f1 = f1_score(y_test, y_pred, zero_division=0)
+        roc_auc = roc_auc_score(y_test, y_proba)
+        train_samples = len(X) - len(X_test)
+        test_samples = len(X_test)
+
+        # Store training and evaluation statistics
+        model_stats.update({
+            'model_type': 'Logistic Regression',
+            'feature_count': len(churn_model.feature_names),
+            'training_samples': len(X),
+            'training_data_count': train_samples,
+            'testing_data_count': test_samples,
+            'accuracy': float(accuracy),
+            'precision': float(precision),
+            'recall': float(recall),
+            'f1': float(f1),
+            'roc_auc': float(roc_auc)
+        })
+
+        # Log metrics to DagsHub / MLflow
+        with mlflow.start_run(run_name='telco_churn_training'):
+            try:
+                mlflow.log_param('model', 'Logistic Regression')
+                mlflow.log_param('feature_count', len(churn_model.feature_names))
+                mlflow.log_param('training_samples', len(X))
+                mlflow.log_metric('accuracy', float(accuracy))
+                mlflow.log_metric('precision', float(precision))
+                mlflow.log_metric('recall', float(recall))
+                mlflow.log_metric('f1', float(f1))
+                mlflow.log_metric('roc_auc', float(roc_auc))
+                mlflow.log_metric('training_data_count', float(train_samples))
+                mlflow.log_metric('testing_data_count', float(test_samples))
+                
+                # Try to log model
+                try:
+                    mlflow.sklearn.log_model(churn_model.model, 'churn_model')
+                except Exception as model_err:
+                    print(f"⚠️ Warning: Could not log model artifact: {str(model_err)}")
+                
+            finally:
+                mlflow.end_run()
+
         print("✅ Model trained successfully!")
-        print(f"Train accuracy: ~85%")
+        print(f"Test accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall: {recall:.4f}")
+        print(f"F1 score: {f1:.4f}")
+        print(f"ROC AUC: {roc_auc:.4f}")
         print(f"Feature names: {len(churn_model.feature_names)} features")
         
         return True
@@ -148,7 +208,8 @@ def home():
 @app.route('/dashboard')
 def dashboard():
     """Dashboard page with analytics"""
-    return render_template('dashboard.html')
+    # Menampilkan statistik metrik di halaman dashboard Flask Anda jika diperlukan
+    return render_template('dashboard.html', stats=model_stats)
 
 
 @app.route('/predict', methods=['GET', 'POST'])
@@ -159,139 +220,39 @@ def predict():
     
     if request.method == 'POST':
         try:
-            # Get form data
-            form_data = {
-                'tenure': request.form.get('tenure', 32),
-                'monthly_charges': request.form.get('monthly_charges', 64.80),
-                'total_charges': request.form.get('total_charges', 2100),
-                'contract': request.form.get('contract', 'Month-to-month'),
-                'internet_service': request.form.get('internet_service', 'DSL'),
-                'tech_support': request.form.get('tech_support', 'No'),
-                'online_security': request.form.get('online_security', 'No'),
-                'payment_method': request.form.get('payment_method', 'Electronic check'),
-                'device_protection': request.form.get('device_protection', 'No'),
-                'online_backup': request.form.get('online_backup', 'No'),
-            }
-            
-            # Prepare prediction data
+            # Ambil data dari form HTML
+            form_data = request.form.to_dict()
             X_pred = prepare_prediction_data(form_data)
             
-            if X_pred is not None and churn_model.model is not None:
-                # Make prediction
-                prediction = churn_model.predict(X_pred)[0]
-                probability = churn_model.predict_proba(X_pred)[0][1]
+            if X_pred is None:
+                return jsonify({'error': 'Gagal memproses data input'}), 400
                 
-                prediction_result = {
-                    'prediction': prediction,
-                    'probability': probability,
-                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'form_data': form_data
-                }
+            # Lakukan prediksi menggunakan model yang sudah dilatih
+            prediction = int(churn_model.predict(X_pred)[0])
+            probability = float(churn_model.predict_proba(X_pred)[0][1])
+            
+            # Simpan hasil prediksi
+            prediction_result = {
+                'prediction': prediction,
+                'probability': probability,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
         except Exception as e:
-            print(f"Error during prediction: {str(e)}")
-    
+            print(f"❌ Error during prediction: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+            
+    # Tampilkan halaman form predict dengan data (kosong jika GET, terisi jika POST)
     return render_template('form_prediction.html', 
                          prediction_result=prediction_result,
                          form_data=form_data)
 
 
-@app.route('/api/prediction', methods=['POST'])
-def api_prediction():
-    """API endpoint untuk prediction (JSON)"""
-    try:
-        data = request.json
-        
-        # Prepare prediction data
-        X_pred = pd.DataFrame([{
-            'Tenure Months': float(data.get('tenure', 32)),
-            'Monthly Charges': float(data.get('monthly_charges', 64.80)),
-            'Total Charges': float(data.get('total_charges', 2100)),
-            'Contract_One year': 1 if data.get('contract') == 'One year' else 0,
-            'Contract_Two year': 1 if data.get('contract') == 'Two year' else 0,
-            'Internet Service_Fiber optic': 1 if data.get('internet_service') == 'Fiber optic' else 0,
-            'Internet Service_No': 1 if data.get('internet_service') == 'No' else 0,
-            'Tech support_Yes': 1 if data.get('tech_support') == 'Yes' else 0,
-            'Online security_Yes': 1 if data.get('online_security') == 'Yes' else 0,
-            'Payment method_Bank transfer (automatic)': 1 if data.get('payment_method') == 'Bank transfer (automatic)' else 0,
-            'Payment method_Credit card (automatic)': 1 if data.get('payment_method') == 'Credit card (automatic)' else 0,
-            'Device protection_Yes': 1 if data.get('device_protection') == 'Yes' else 0,
-            'Online backup_Yes': 1 if data.get('online_backup') == 'Yes' else 0,
-        }])
-        
-        # Make prediction
-        prediction = churn_model.predict(X_pred)[0]
-        probability = churn_model.predict_proba(X_pred)[0][1]
-        
-        return jsonify({
-            'success': True,
-            'prediction': int(prediction),
-            'probability': float(probability),
-            'churn_status': 'Churn' if prediction == 1 else 'No Churn',
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-@app.route('/api/model-info')
-def model_info():
-    """Get model information"""
-    try:
-        return jsonify({
-            'success': True,
-            'model_type': 'Logistic Regression',
-            'accuracy': 0.85,
-            'total_features': len(churn_model.feature_names) if churn_model.feature_names else 0,
-            'training_samples': 7043,
-            'churn_rate': 0.265
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-# ===== ERROR HANDLERS =====
-
-@app.errorhandler(404)
-def not_found(error):
-    """Handle 404 errors"""
-    return render_template('base.html'), 404
-
-
-@app.errorhandler(500)
-def server_error(error):
-    """Handle 500 errors"""
-    return render_template('base.html'), 500
-
-
-# ===== MAIN =====
-
+# ===== TRIGER TRAINING SAAT APLIKASI JALAN =====
 if __name__ == '__main__':
-    print("=" * 60)
-    print("🚀 Telco Customer Churn Analysis Dashboard")
-    print("=" * 60)
+    print("⏳ Melatih model dan mengirim metrik ke DagsHub...")
+    # Ini akan memicu pengiriman nilai f1, precision, recall ke DagsHub
+    train_model_with_data() 
     
-    # Train model on startup
-    print("\n📚 Training model...")
-    if train_model_with_data():
-        print("✅ Model ready for predictions!")
-    else:
-        print("⚠️ Warning: Model training incomplete, predictions may fail")
-    
-    print("\n" + "=" * 60)
-    print("🌐 Starting Flask application...")
-    print("📍 Open your browser and go to: http://localhost:5000")
-    print("=" * 60 + "\n")
-    
-    # Run Flask app
-    app.run(
-        host='localhost',
-        port=5000,
-        debug=True,
-        use_reloader=True
-    )
+    # Jalankan server Flask
+    app.run(debug=True, port=5000)
+
