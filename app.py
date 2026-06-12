@@ -14,8 +14,10 @@ from model.modeling import ChurnModel
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'telco_churn_analysis_2026'
 
-# DagsHub configuration
-dagshub.init(repo_owner='Carissaokt', repo_name='Telco-Customer-Churn-Dashboard', mlflow=True)
+# DagsHub configuration only if explicitly enabled in deploy environment
+ENABLE_DAGSHUB = os.environ.get('ENABLE_DAGSHUB', 'false').lower() == 'true'
+if ENABLE_DAGSHUB:
+    dagshub.init(repo_owner='Carissaokt', repo_name='Telco-Customer-Churn-Dashboard', mlflow=True)
 
 # Global model instance
 churn_model = ChurnModel()
@@ -250,9 +252,8 @@ def predict():
 # ===== TRIGER TRAINING SAAT APLIKASI JALAN =====
 if __name__ == '__main__':
     print("⏳ Melatih model dan mengirim metrik ke DagsHub...")
-    # Ini akan memicu pengiriman nilai f1, precision, recall ke DagsHub
-    train_model_with_data() 
-    
-    # Jalankan server Flask
-    app.run(debug=True, port=5000)
+    train_model_with_data()
+
+    # Jalankan server Flask di Hugging Face Spaces / container runtime
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 7860)), debug=False)
 
